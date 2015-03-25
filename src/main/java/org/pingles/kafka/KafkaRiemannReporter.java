@@ -1,6 +1,5 @@
 package org.pingles.kafka;
 
-import com.aphyr.riemann.client.AbstractRiemannClient;
 import com.aphyr.riemann.client.RiemannClient;
 import com.yammer.metrics.core.Clock;
 import kafka.metrics.KafkaMetricsConfig;
