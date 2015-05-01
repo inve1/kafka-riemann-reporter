@@ -7,6 +7,8 @@ import kafka.metrics.KafkaMetricsReporter;
 import kafka.utils.VerifiableProperties;
 import org.apache.log4j.Logger;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
 public class KafkaRiemannReporter implements KafkaRiemannReporterMBean, KafkaMetricsReporter {
@@ -31,7 +33,7 @@ public class KafkaRiemannReporter implements KafkaRiemannReporterMBean, KafkaMet
         KafkaMetricsConfig metricsConfig = new KafkaMetricsConfig(props);
         try {
             RiemannEventPublisher publisher = createPublisher(props);
-            reporter = new RiemannReporter(Clock.defaultClock(), publisher);
+            reporter = new RiemannReporter(Clock.defaultClock(), publisher, Arrays.asList(props.getString("kafka.riemann.metrics.reporter.tags", "kafkabroker").split(",")));
             startReporter(metricsConfig.pollingIntervalSecs());
         } catch (IOException e) {
             throw new RuntimeException(e);

@@ -8,6 +8,7 @@ import org.apache.log4j.Logger;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -17,11 +18,13 @@ public class RiemannReporter extends AbstractPollingReporter implements MetricPr
     private final Clock clock;
     private final RiemannEventPublisher publisher;
     private long currentTime = 0L;
+    private List<String> tags;
 
-    public RiemannReporter(Clock clock, RiemannEventPublisher publisher) {
+    public RiemannReporter(Clock clock, RiemannEventPublisher publisher, List<String> tags) {
         super(Metrics.defaultRegistry(), "riemann-reporter");
         this.clock = clock;
         this.publisher = publisher;
+        this.tags = tags;
     }
 
     @Override
@@ -101,9 +104,11 @@ public class RiemannReporter extends AbstractPollingReporter implements MetricPr
             Proto.Event event = builder.setMetricD((Double) gauge.value()).build();
             sendEvent(event);
         } else {
-            Long longValue = Long.valueOf(gauge.value().toString());
-            Proto.Event event = builder.setMetricSint64(longValue).build();
-            sendEvent(event);
+            try {
+                Long longValue = Long.valueOf(gauge.value().toString());
+                Proto.Event event = builder.setMetricSint64(longValue).build();
+                sendEvent(event);
+            } catch (Exception e) { return;  } //some gauges aren't numbers. don't report those
         }
     }
 
@@ -113,7 +118,7 @@ public class RiemannReporter extends AbstractPollingReporter implements MetricPr
             builder.setHost(InetAddress.getLocalHost().getHostName());
             builder.setTime(currentTime);
             builder.setService(serviceLabel);
-            builder.addTags("kafkabroker");
+            builder.addAllTags(tags);
         } catch (UnknownHostException e) {
             LOGGER.error("Couldn't determine current host", e);
         }
